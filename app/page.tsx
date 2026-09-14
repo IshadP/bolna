@@ -1,69 +1,252 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React, { useState, useRef, useCallback } from "react";
+import { AnnouncementBanner } from "@/components/layout/AnnouncementBanner";
+import { LeftSidebar } from "@/components/layout/LeftSidebar";
+import { AppHeader } from "@/components/layout/AppHeader";
+import { GraphCanvas } from "@/components/graph/GraphCanvas";
+import {
+  InspectorPanel,
+  InspectorTabType,
+} from "@/components/inspector/InspectorPanel";
+import { Node, Edge } from "@xyflow/react";
+import { CustomNodeData, CustomEdgeData } from "@/lib/types/graph";
+import {
+  ValidationFinding,
+  ValidationResult,
+  ValidationState,
+  ApiValidationError,
+} from "@/lib/types/validation";
+import { PresetTestGraph } from "@/lib/graph/testGraphs";
+
+export default function BolnaGraphAgentApp() {
+  // Navigation
+  const [activeSidebarNav, setActiveSidebarNav] = useState("Graph Agent");
+  const [agentName, setAgentName] = useState("New Graph Agent");
+
+  // Selection state
+  const [selectedNode, setSelectedNode] = useState<Node<CustomNodeData> | null>(null);
+  const [selectedEdge, setSelectedEdge] = useState<Edge<CustomEdgeData> | null>(null);
+
+  // Inspector state
+  const [isInspectorOpen, setIsInspectorOpen] = useState(true);
+  const [inspectorTab, setInspectorTab] = useState<InspectorTabType>("test");
+
+  // Semantic Validation State
+  const [validationState, setValidationState] = useState<ValidationState>("never_validated");
+  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
+  const [validationError, setValidationError] = useState<ApiValidationError | null>(null);
+  const [selectedFinding, setSelectedFinding] = useState<ValidationFinding | null>(null);
+
+  // Reference to graph actions (update, delete, duplicate, add transition, focus target, load preset, etc.)
+  const graphActionsRef = useRef<{
+    updateNode: (id: string, partial: Partial<CustomNodeData>) => void;
+    deleteNode: (id: string) => void;
+    duplicateNode?: (id: string) => void;
+    addTransition?: (sourceId: string) => void;
+    updateEdge: (id: string, partial: Partial<CustomEdgeData>) => void;
+    deleteEdge: (id: string) => void;
+    focusTarget: (targetId: string, targetType: "node" | "edge") => void;
+    loadPresetGraph: (preset: PresetTestGraph) => void;
+    cancelValidation?: () => void;
+    runValidation?: () => void;
+    nodes: Node<CustomNodeData>[];
+    edges?: Edge<CustomEdgeData>[];
+  } | null>(null);
+
+  const [currentNodes, setCurrentNodes] = useState<Node<CustomNodeData>[]>([]);
+  const [currentEdges, setCurrentEdges] = useState<Edge<CustomEdgeData>[]>([]);
+
+  const handleRegisterGraphRef = useCallback(
+    (handlers: {
+      updateNode: (id: string, partial: Partial<CustomNodeData>) => void;
+      deleteNode: (id: string) => void;
+      duplicateNode?: (id: string) => void;
+      addTransition?: (sourceId: string) => void;
+      updateEdge: (id: string, partial: Partial<CustomEdgeData>) => void;
+      deleteEdge: (id: string) => void;
+      focusTarget: (targetId: string, targetType: "node" | "edge") => void;
+      loadPresetGraph: (preset: PresetTestGraph) => void;
+      cancelValidation?: () => void;
+      runValidation?: () => void;
+      nodes: Node<CustomNodeData>[];
+      edges?: Edge<CustomEdgeData>[];
+    }) => {
+      graphActionsRef.current = handlers;
+      setCurrentNodes(handlers.nodes);
+      if (handlers.edges) setCurrentEdges(handlers.edges);
+    },
+    []
+  );
+
+  const handleSelectNode = (node: Node<CustomNodeData> | null) => {
+    setSelectedNode(node);
+    if (node) {
+      setSelectedEdge(null);
+      // If validation tab is active, stay on validation tab so user sees filtered findings for this node!
+      // Otherwise default to setup
+      setInspectorTab((prev) => (prev === "validation" ? "validation" : "setup"));
+      setIsInspectorOpen(true);
+    }
+  };
+
+  const handleSelectEdge = (edge: Edge<CustomEdgeData> | null) => {
+    setSelectedEdge(edge);
+    if (edge) {
+      setSelectedNode(null);
+      setInspectorTab((prev) => (prev === "validation" ? "validation" : "setup"));
+      setIsInspectorOpen(true);
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedNode(null);
+    setSelectedEdge(null);
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100">
+      {/* 1. Global Announcement Banner */}
+      <AnnouncementBanner />
+
+      {/* 2. Main Workspace Layout */}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        {/* Left Navigation Sidebar */}
+        <LeftSidebar
+          activeTab={activeSidebarNav}
+          onTabChange={(tab) => setActiveSidebarNav(tab)}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+
+        {/* Central Workspace Area */}
+        <div className="flex flex-col flex-1 min-w-0 h-full overflow-hidden">
+          {/* Main App Header */}
+          <AppHeader
+            agentName={agentName}
+            onRename={(newName) => setAgentName(newName)}
+          />
+
+          {/* Graph Canvas & Right Inspector */}
+          <div className="flex flex-1 min-h-0 overflow-hidden relative">
+            {/* Graph Canvas */}
+            <div className="flex-1 h-full min-w-0 relative">
+              <GraphCanvas
+                onSelectNode={handleSelectNode}
+                onSelectEdge={handleSelectEdge}
+                selectedNodeId={selectedNode?.id || null}
+                selectedEdgeId={selectedEdge?.id || null}
+                isInspectorOpen={isInspectorOpen}
+                onToggleInspector={() => setIsInspectorOpen(true)}
+                validationState={validationState}
+                setValidationState={setValidationState}
+                validationResult={validationResult}
+                setValidationResult={setValidationResult}
+                validationError={validationError}
+                setValidationError={setValidationError}
+                selectedFinding={selectedFinding}
+                setSelectedFinding={setSelectedFinding}
+                onOpenValidationTab={() => {
+                  setInspectorTab("validation");
+                  setIsInspectorOpen(true);
+                }}
+                onRegisterGraphRef={handleRegisterGraphRef}
+              />
+            </div>
+
+            {/* Right Inspector Panel */}
+            <InspectorPanel
+              isOpen={isInspectorOpen}
+              onClose={() => setIsInspectorOpen(false)}
+              activeTab={inspectorTab}
+              onTabChange={(tab) => setInspectorTab(tab)}
+              selectedNode={selectedNode}
+              selectedEdge={selectedEdge}
+              onUpdateNode={(id, partial) => {
+                if (graphActionsRef.current) {
+                  graphActionsRef.current.updateNode(id, partial);
+                  if (selectedNode && selectedNode.id === id) {
+                    setSelectedNode({
+                      ...selectedNode,
+                      data: {
+                        ...selectedNode.data,
+                        ...partial,
+                      },
+                    });
+                  }
+                }
+              }}
+              onDeleteNode={(id) => {
+                if (graphActionsRef.current) {
+                  graphActionsRef.current.deleteNode(id);
+                }
+                setSelectedNode(null);
+              }}
+              onUpdateEdge={(id, partial) => {
+                if (graphActionsRef.current) {
+                  graphActionsRef.current.updateEdge(id, partial);
+                  if (selectedEdge && selectedEdge.id === id) {
+                    setSelectedEdge({
+                      ...selectedEdge,
+                      data: {
+                        ...selectedEdge.data,
+                        ...partial,
+                        transitionType: partial.transitionType || selectedEdge.data?.transitionType || "always",
+                      },
+                    });
+                  }
+                }
+              }}
+              onDeleteEdge={(id) => {
+                if (graphActionsRef.current) {
+                  graphActionsRef.current.deleteEdge(id);
+                }
+                setSelectedEdge(null);
+              }}
+              onClearSelection={handleClearSelection}
+              validationState={validationState}
+              validationResult={validationResult}
+              validationError={validationError}
+              selectedFinding={selectedFinding}
+              onSelectFinding={setSelectedFinding}
+              onRunValidation={() => {
+                if (graphActionsRef.current?.runValidation) {
+                  graphActionsRef.current.runValidation();
+                }
+              }}
+              onCancelValidation={() => {
+                if (graphActionsRef.current?.cancelValidation) {
+                  graphActionsRef.current.cancelValidation();
+                }
+              }}
+              onDismissError={() => {
+                setValidationError(null);
+                setValidationState(validationResult ? "validated" : "never_validated");
+              }}
+              onFocusTarget={(targetId, targetType) => {
+                if (graphActionsRef.current) {
+                  graphActionsRef.current.focusTarget(targetId, targetType);
+                }
+              }}
+              onLoadPresetGraph={(preset) => {
+                if (graphActionsRef.current) {
+                  graphActionsRef.current.loadPresetGraph(preset);
+                }
+              }}
+              onDuplicateNode={(id) => {
+                if (graphActionsRef.current?.duplicateNode) {
+                  graphActionsRef.current.duplicateNode(id);
+                }
+              }}
+              onAddTransition={(sourceId) => {
+                if (graphActionsRef.current?.addTransition) {
+                  graphActionsRef.current.addTransition(sourceId);
+                }
+              }}
+              nodes={currentNodes}
+              edges={currentEdges}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
