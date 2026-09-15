@@ -37,6 +37,7 @@ export default function BolnaGraphAgentApp() {
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [validationError, setValidationError] = useState<ApiValidationError | null>(null);
   const [selectedFinding, setSelectedFinding] = useState<ValidationFinding | null>(null);
+  const [highlightExcerpt, setHighlightExcerpt] = useState<string | null>(null);
 
   // Reference to graph actions (update, delete, duplicate, add transition, focus target, load preset, etc.)
   const graphActionsRef = useRef<{
@@ -102,6 +103,31 @@ export default function BolnaGraphAgentApp() {
   const handleClearSelection = () => {
     setSelectedNode(null);
     setSelectedEdge(null);
+    setHighlightExcerpt(null);
+  };
+
+  const handleLocateInPrompt = (nodeId: string, excerpt?: string) => {
+    // 1. Focus the node on canvas
+    if (graphActionsRef.current) {
+      graphActionsRef.current.focusTarget(nodeId, "node");
+    }
+
+    // 2. Find and select the node
+    const targetNode = currentNodes.find(
+      (n) => n.id === nodeId || n.data?.name?.toLowerCase() === nodeId.toLowerCase()
+    );
+
+    if (targetNode) {
+      setSelectedNode(targetNode);
+      setSelectedEdge(null);
+    }
+
+    // 3. Set the excerpt to highlight and switch to setup tab
+    if (excerpt) {
+      setHighlightExcerpt(excerpt);
+    }
+    setInspectorTab("setup");
+    setIsInspectorOpen(true);
   };
 
   return (
@@ -226,6 +252,9 @@ export default function BolnaGraphAgentApp() {
                   graphActionsRef.current.focusTarget(targetId, targetType);
                 }
               }}
+              onLocateInPrompt={handleLocateInPrompt}
+              highlightExcerpt={highlightExcerpt}
+              onClearHighlight={() => setHighlightExcerpt(null)}
               onLoadPresetGraph={(preset) => {
                 if (graphActionsRef.current) {
                   graphActionsRef.current.loadPresetGraph(preset);

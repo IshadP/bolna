@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { CustomNodeData, CustomEdgeData, NodeType } from "@/lib/types/graph";
 import { Node, Edge } from "@xyflow/react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface NodeEditorProps {
@@ -29,6 +30,8 @@ interface NodeEditorProps {
   nodes?: Node<CustomNodeData>[];
   edges?: Edge<CustomEdgeData>[];
   onFocusTarget?: (targetId: string, targetType: "node" | "edge") => void;
+  highlightExcerpt?: string | null;
+  onClearHighlight?: () => void;
 }
 
 export function NodeEditor({
@@ -42,6 +45,8 @@ export function NodeEditor({
   nodes = [],
   edges = [],
   onFocusTarget,
+  highlightExcerpt,
+  onClearHighlight,
 }: NodeEditorProps) {
   // Collapsible sections
   const [isLlmOverridesOpen, setIsLlmOverridesOpen] = useState(false);
@@ -58,6 +63,8 @@ export function NodeEditor({
   // Determine if this is the start node
   const isStart = data.type === "start" || data.isStartNode === true;
 
+  const promptText = data.instructions || data.description || "";
+
   return (
     <div className="space-y-4 text-xs select-none animate-in fade-in duration-150 pb-8">
       {/* 1. Top Action Buttons Bar: [ Duplicate ] [ + Transition ] [ Delete ] */}
@@ -66,7 +73,7 @@ export function NodeEditor({
         <button
           type="button"
           onClick={() => onDuplicate && onDuplicate(nodeId)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer shadow-2xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer shadow-2xs"
         >
           <Copy className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" />
           <span>Duplicate</span>
@@ -76,7 +83,7 @@ export function NodeEditor({
         <button
           type="button"
           onClick={() => onAddTransition && onAddTransition(nodeId)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer shadow-2xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer shadow-2xs"
         >
           <Plus className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" />
           <span>Transition</span>
@@ -86,7 +93,7 @@ export function NodeEditor({
         <button
           type="button"
           onClick={() => onDelete(nodeId)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40 font-medium transition-colors cursor-pointer ml-auto"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40 font-medium transition-colors cursor-pointer ml-auto"
         >
           <Trash2 className="w-3.5 h-3.5" />
           <span>Delete</span>
@@ -130,7 +137,7 @@ export function NodeEditor({
               })
             }
             className={cn(
-              "flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg border text-xs font-medium transition-all cursor-pointer",
+              "flex items-center justify-center gap-1.5 py-2 px-2 rounded-md border text-xs font-medium transition-all cursor-pointer",
               data.type === "conversation" || data.type === "start"
                 ? "border-blue-500 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-semibold shadow-2xs"
                 : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900"
@@ -150,7 +157,7 @@ export function NodeEditor({
               })
             }
             className={cn(
-              "flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg border text-xs font-medium transition-all cursor-pointer",
+              "flex items-center justify-center gap-1.5 py-2 px-2 rounded-md border text-xs font-medium transition-all cursor-pointer",
               data.type === "closing" || data.type === "function"
                 ? "border-blue-500 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-semibold shadow-2xs"
                 : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900"
@@ -170,7 +177,7 @@ export function NodeEditor({
               })
             }
             className={cn(
-              "flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg border text-xs font-medium transition-all cursor-pointer",
+              "flex items-center justify-center gap-1.5 py-2 px-2 rounded-md border text-xs font-medium transition-all cursor-pointer",
               data.type === "router"
                 ? "border-blue-500 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-semibold shadow-2xs"
                 : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900"
@@ -182,23 +189,85 @@ export function NodeEditor({
         </div>
       </div>
 
-      {/* 4. Prompt */}
+      {/* 4. Prompt / Instructions */}
       <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-          Prompt
-        </label>
-        <textarea
-          rows={5}
-          value={data.instructions || data.description || ""}
-          onChange={(e) =>
-            onUpdate(nodeId, {
-              instructions: e.target.value,
-              description: e.target.value.slice(0, 100),
-            })
-          }
-          placeholder="Greet the caller and ask how you can help them today."
-          className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 text-xs leading-relaxed outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 resize-y"
-        />
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+            Prompt
+          </label>
+          <div className="flex items-center gap-2">
+            {highlightExcerpt && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-sm border border-amber-200 dark:border-amber-800 animate-pulse">
+                <span>Issue line highlighted</span>
+                {onClearHighlight && (
+                  <button
+                    type="button"
+                    onClick={onClearHighlight}
+                    className="hover:text-amber-800 dark:hover:text-amber-200 ml-0.5 cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                )}
+              </span>
+            )}
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-mono">
+              Markdown
+            </span>
+          </div>
+        </div>
+
+        {/* If highlightExcerpt is present, display split line-by-line highlight preview */}
+        {highlightExcerpt && promptText.toLowerCase().includes(highlightExcerpt.toLowerCase().trim()) ? (
+          <div className="space-y-2">
+            <div className="w-full p-3 rounded-xl border-2 border-amber-400/80 bg-amber-50/20 dark:bg-amber-950/20 text-slate-800 dark:text-slate-100 text-xs leading-relaxed space-y-1 font-sans">
+              {promptText.split("\n").map((line, lIdx) => {
+                const isMatchingLine =
+                  line.toLowerCase().includes(highlightExcerpt.toLowerCase().trim()) ||
+                  highlightExcerpt.toLowerCase().trim().includes(line.toLowerCase().trim());
+
+                return (
+                  <div
+                    key={lIdx}
+                    className={cn(
+                      "px-2 py-1 rounded transition-colors",
+                      isMatchingLine
+                        ? "bg-amber-200/90 dark:bg-amber-900/80 text-amber-950 dark:text-amber-100 font-semibold border-l-3 border-amber-500 shadow-2xs"
+                        : "text-slate-600 dark:text-slate-400"
+                    )}
+                  >
+                    {line || <span className="opacity-0">.</span>}
+                  </div>
+                );
+              })}
+            </div>
+
+            <textarea
+              rows={3}
+              value={promptText}
+              onChange={(e) =>
+                onUpdate(nodeId, {
+                  instructions: e.target.value,
+                  description: e.target.value,
+                })
+              }
+              placeholder="Edit prompt..."
+              className="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 text-xs leading-relaxed outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 resize-y"
+            />
+          </div>
+        ) : (
+          <textarea
+            rows={5}
+            value={promptText}
+            onChange={(e) =>
+              onUpdate(nodeId, {
+                instructions: e.target.value,
+                description: e.target.value,
+              })
+            }
+            placeholder="Greet the caller and ask how you can help them today."
+            className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 text-xs leading-relaxed outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 resize-y"
+          />
+        )}
       </div>
 
       {/* 5. Examples: [ Hindi ] [ English ] */}
@@ -220,7 +289,7 @@ export function NodeEditor({
               });
             }}
             className={cn(
-              "px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer",
+              "px-3 py-1.5 rounded-md border text-xs font-medium transition-colors cursor-pointer",
               exampleLang === "hindi"
                 ? "border-blue-400 bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 font-semibold"
                 : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50"
@@ -242,7 +311,7 @@ export function NodeEditor({
               });
             }}
             className={cn(
-              "px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer",
+              "px-3 py-1.5 rounded-md border text-xs font-medium transition-colors cursor-pointer",
               exampleLang === "english"
                 ? "border-blue-400 bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 font-semibold"
                 : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50"
@@ -393,126 +462,136 @@ export function NodeEditor({
           />
         </button>
 
-        {isLlmOverridesOpen && (
-          <div className="pt-3 pb-1 space-y-3 animate-in fade-in duration-150">
-            {/* Reasoning effort */}
-            <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                Reasoning effort
-              </label>
-              <div className="relative">
-                <select
-                  value={data.llmOverrides?.reasoningEffort || "Inherit from agent"}
-                  onChange={(e) =>
-                    onUpdate(nodeId, {
-                      llmOverrides: {
-                        ...data.llmOverrides,
-                        reasoningEffort: e.target.value,
-                      },
-                    })
-                  }
-                  className="w-full h-8 px-2.5 pr-7 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-200 outline-none appearance-none cursor-pointer"
-                >
-                  <option value="Inherit from agent">Inherit from agent</option>
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                </select>
-                <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+        <AnimatePresence>
+          {isLlmOverridesOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: [0.2, 0, 0, 1] }}
+              className="overflow-hidden"
+            >
+              <div className="pt-3 pb-1 space-y-3">
+                {/* Reasoning effort */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                    Reasoning effort
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={data.llmOverrides?.reasoningEffort || "Inherit from agent"}
+                      onChange={(e) =>
+                        onUpdate(nodeId, {
+                          llmOverrides: {
+                            ...data.llmOverrides,
+                            reasoningEffort: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full h-8 px-2.5 pr-7 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-200 outline-none appearance-none cursor-pointer"
+                    >
+                      <option value="Inherit from agent">Inherit from agent</option>
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                    </select>
+                    <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* Model & provider */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                    Model & provider
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={data.llmOverrides?.modelProvider || "Inherit from agent"}
+                      onChange={(e) =>
+                        onUpdate(nodeId, {
+                          llmOverrides: {
+                            ...data.llmOverrides,
+                            modelProvider: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full h-8 px-2.5 pr-7 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-200 outline-none appearance-none cursor-pointer"
+                    >
+                      <option value="Inherit from agent">Inherit from agent</option>
+                      <option value="openai">OpenAI</option>
+                      <option value="openrouter">OpenRouter</option>
+                      <option value="anthropic">Anthropic</option>
+                    </select>
+                    <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+
+                  {/* Select model */}
+                  <div className="relative">
+                    <select
+                      value={data.llmOverrides?.modelName || ""}
+                      onChange={(e) =>
+                        onUpdate(nodeId, {
+                          llmOverrides: {
+                            ...data.llmOverrides,
+                            modelName: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full h-8 px-2.5 pr-7 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs text-slate-500 dark:text-slate-400 outline-none appearance-none cursor-pointer"
+                    >
+                      <option value="">Select model</option>
+                      <option value="gpt-4o">GPT-4o</option>
+                      <option value="gpt-4o-mini">GPT-4o Mini</option>
+                      <option value="nemotron-3-ultra">Nemotron-3-Ultra</option>
+                      <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+                    </select>
+                    <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* Temperature */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                    Temperature
+                  </label>
+                  <input
+                    type="text"
+                    value={data.llmOverrides?.temperature || "Inherit"}
+                    onChange={(e) =>
+                      onUpdate(nodeId, {
+                        llmOverrides: {
+                          ...data.llmOverrides,
+                          temperature: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full h-8 px-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 outline-none"
+                  />
+                </div>
+
+                {/* Max tokens */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                    Max tokens
+                  </label>
+                  <input
+                    type="text"
+                    value={data.llmOverrides?.maxTokens || "Inherit"}
+                    onChange={(e) =>
+                      onUpdate(nodeId, {
+                        llmOverrides: {
+                          ...data.llmOverrides,
+                          maxTokens: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full h-8 px-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 outline-none"
+                  />
+                </div>
               </div>
-            </div>
-
-            {/* Model & provider */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                Model & provider
-              </label>
-              <div className="relative">
-                <select
-                  value={data.llmOverrides?.modelProvider || "Inherit from agent"}
-                  onChange={(e) =>
-                    onUpdate(nodeId, {
-                      llmOverrides: {
-                        ...data.llmOverrides,
-                        modelProvider: e.target.value,
-                      },
-                    })
-                  }
-                  className="w-full h-8 px-2.5 pr-7 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-200 outline-none appearance-none cursor-pointer"
-                >
-                  <option value="Inherit from agent">Inherit from agent</option>
-                  <option value="openai">OpenAI</option>
-                  <option value="openrouter">OpenRouter</option>
-                  <option value="anthropic">Anthropic</option>
-                </select>
-                <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
-
-              {/* Select model */}
-              <div className="relative">
-                <select
-                  value={data.llmOverrides?.modelName || ""}
-                  onChange={(e) =>
-                    onUpdate(nodeId, {
-                      llmOverrides: {
-                        ...data.llmOverrides,
-                        modelName: e.target.value,
-                      },
-                    })
-                  }
-                  className="w-full h-8 px-2.5 pr-7 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs text-slate-500 dark:text-slate-400 outline-none appearance-none cursor-pointer"
-                >
-                  <option value="">Select model</option>
-                  <option value="gpt-4o">GPT-4o</option>
-                  <option value="gpt-4o-mini">GPT-4o Mini</option>
-                  <option value="nemotron-3-ultra">Nemotron-3-Ultra</option>
-                  <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
-                </select>
-                <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
-            </div>
-
-            {/* Temperature */}
-            <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                Temperature
-              </label>
-              <input
-                type="text"
-                value={data.llmOverrides?.temperature || "Inherit"}
-                onChange={(e) =>
-                  onUpdate(nodeId, {
-                    llmOverrides: {
-                      ...data.llmOverrides,
-                      temperature: e.target.value,
-                    },
-                  })
-                }
-                className="w-full h-8 px-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 outline-none"
-              />
-            </div>
-
-            {/* Max tokens */}
-            <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                Max tokens
-              </label>
-              <input
-                type="text"
-                value={data.llmOverrides?.maxTokens || "Inherit"}
-                onChange={(e) =>
-                  onUpdate(nodeId, {
-                    llmOverrides: {
-                      ...data.llmOverrides,
-                      maxTokens: e.target.value,
-                    },
-                  })
-                }
-                className="w-full h-8 px-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 outline-none"
-              />
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* 10. Knowledge base (RAG) (Accordion) */}
@@ -533,21 +612,31 @@ export function NodeEditor({
           />
         </button>
 
-        {isRagOpen && (
-          <div className="pt-3 pb-1 space-y-1 animate-in fade-in duration-150">
-            <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-              Knowledge base (multi-select)
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Select knowledge bases"
-                readOnly
-                className="w-full h-8 px-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs text-slate-500 cursor-pointer outline-none"
-              />
-            </div>
-          </div>
-        )}
+        <AnimatePresence>
+          {isRagOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: [0.2, 0, 0, 1] }}
+              className="overflow-hidden"
+            >
+              <div className="pt-3 pb-1 space-y-1">
+                <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                  Knowledge base (multi-select)
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Select knowledge bases"
+                    readOnly
+                    className="w-full h-8 px-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs text-slate-500 cursor-pointer outline-none"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* 11. Set as start node */}
@@ -556,7 +645,7 @@ export function NodeEditor({
           Set as start node
         </label>
         {isStart ? (
-          <div className="w-full py-2 px-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-medium text-center text-xs">
+          <div className="w-full py-2 px-3 rounded-md bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-medium text-center text-xs">
             Current start node
           </div>
         ) : (
@@ -569,7 +658,7 @@ export function NodeEditor({
                 isStartNode: true,
               })
             }
-            className="w-full py-2 px-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-center text-xs transition-colors cursor-pointer"
+            className="w-full py-2 px-3 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-center text-xs transition-colors cursor-pointer"
           >
             Make this the start node
           </button>

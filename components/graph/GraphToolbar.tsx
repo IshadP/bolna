@@ -30,6 +30,7 @@ import {
 import { NodeType } from "@/lib/types/graph";
 import { ValidationState } from "@/lib/types/validation";
 import { PRESET_TEST_GRAPHS, PresetTestGraph } from "@/lib/graph/testGraphs";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface GraphToolbarProps {
@@ -95,81 +96,90 @@ export function GraphToolbar({
   };
 
   return (
-    <div className="flex items-center gap-1.5 p-1 rounded-sm border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 shadow-sm backdrop-blur select-none">
+    <div className="flex items-center gap-1.5 p-1 rounded-md border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 shadow-sm backdrop-blur select-none">
       {/* Add Node Popover Trigger */}
       <div className="relative" ref={addMenuRef}>
         <button
           type="button"
           onClick={() => setAddMenuOpen(!addMenuOpen)}
-          className="inline-flex items-center gap-1.5 px-3 h-9 rounded-sm text-xs leading-4 font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 transition-colors shadow-2xs cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3 h-9 rounded-md text-xs leading-4 font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 transition-colors shadow-2xs cursor-pointer"
         >
           <Plus className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           <span>Add node</span>
         </button>
 
         {/* Node Type Popover Menu */}
-        {addMenuOpen && (
-          <div className="absolute left-0 top-full mt-2 w-48 rounded-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-lg p-1 z-50 animate-in fade-in zoom-in-95 duration-100">
-            <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              Select Node Type
-            </div>
-            <button
-              type="button"
-              onClick={() => handleSelectNodeType("conversation")}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-sm text-xs leading-4 text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-950/50 hover:text-blue-600 transition-colors text-left cursor-pointer"
+        <AnimatePresence>
+          {addMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: -4 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: -4 }}
+              transition={{ duration: 0.15, ease: [0.2, 0, 0, 1] }}
+              style={{ transformOrigin: "top left" }}
+              className="absolute left-0 top-full mt-2 w-48 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-lg p-1 z-50"
             >
-              <div className="w-5 h-5 rounded-sm bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600">
-                <MessageSquare className="w-3.5 h-3.5" />
+              <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Select Node Type
               </div>
-              <div>
-                <div className="font-semibold leading-tight">Conversation</div>
-                <div className="text-[10px] text-slate-400">Handle dialogue turn</div>
-              </div>
-            </button>
+              <button
+                type="button"
+                onClick={() => handleSelectNodeType("conversation")}
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs leading-4 text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-950/50 hover:text-blue-600 transition-colors text-left cursor-pointer"
+              >
+                <div className="w-5 h-5 rounded-md bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600">
+                  <MessageSquare className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <div className="font-semibold leading-tight">Conversation</div>
+                  <div className="text-[10px] text-slate-400">Handle dialogue turn</div>
+                </div>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => handleSelectNodeType("router")}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-sm text-xs leading-4 text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-950/50 hover:text-amber-600 transition-colors text-left cursor-pointer"
-            >
-              <div className="w-5 h-5 rounded-sm bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-amber-600">
-                <GitBranch className="w-3.5 h-3.5" />
-              </div>
-              <div>
-                <div className="font-semibold leading-tight">Router</div>
-                <div className="text-[10px] text-slate-400">Branch based on intent</div>
-              </div>
-            </button>
+              <button
+                type="button"
+                onClick={() => handleSelectNodeType("router")}
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs leading-4 text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-950/50 hover:text-amber-600 transition-colors text-left cursor-pointer"
+              >
+                <div className="w-5 h-5 rounded-md bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-amber-600">
+                  <GitBranch className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <div className="font-semibold leading-tight">Router</div>
+                  <div className="text-[10px] text-slate-400">Branch based on intent</div>
+                </div>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => handleSelectNodeType("function")}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-sm text-xs leading-4 text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 hover:text-emerald-600 transition-colors text-left cursor-pointer"
-            >
-              <div className="w-5 h-5 rounded-sm bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-emerald-600">
-                <Wrench className="w-3.5 h-3.5" />
-              </div>
-              <div>
-                <div className="font-semibold leading-tight">Function / Tool</div>
-                <div className="text-[10px] text-slate-400">Execute API or action</div>
-              </div>
-            </button>
+              <button
+                type="button"
+                onClick={() => handleSelectNodeType("function")}
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs leading-4 text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 hover:text-emerald-600 transition-colors text-left cursor-pointer"
+              >
+                <div className="w-5 h-5 rounded-md bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-emerald-600">
+                  <Wrench className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <div className="font-semibold leading-tight">Function / Tool</div>
+                  <div className="text-[10px] text-slate-400">Execute API or action</div>
+                </div>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => handleSelectNodeType("closing")}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-sm text-xs leading-4 text-slate-700 dark:text-slate-200 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-600 transition-colors text-left cursor-pointer"
-            >
-              <div className="w-5 h-5 rounded-sm bg-rose-100 dark:bg-rose-900/50 flex items-center justify-center text-rose-600">
-                <PhoneOff className="w-3.5 h-3.5" />
-              </div>
-              <div>
-                <div className="font-semibold leading-tight">Closing</div>
-                <div className="text-[10px] text-slate-400">Conclude or end call</div>
-              </div>
-            </button>
-          </div>
-        )}
+              <button
+                type="button"
+                onClick={() => handleSelectNodeType("closing")}
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs leading-4 text-slate-700 dark:text-slate-200 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-600 transition-colors text-left cursor-pointer"
+              >
+                <div className="w-5 h-5 rounded-md bg-rose-100 dark:bg-rose-900/50 flex items-center justify-center text-rose-600">
+                  <PhoneOff className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <div className="font-semibold leading-tight">Closing</div>
+                  <div className="text-[10px] text-slate-400">Conclude or end call</div>
+                </div>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <div className="w-[1px] h-5 bg-slate-200 dark:bg-slate-800 mx-0.5" />
@@ -251,11 +261,11 @@ export function GraphToolbar({
           type="button"
           onClick={onCancelValidation}
           title="Cancel AI Validation in progress"
-          className="inline-flex items-center gap-1.5 px-3 h-9 rounded-sm text-xs leading-4 font-semibold transition-all shadow-xs ml-0.5 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200 dark:border-rose-900 cursor-pointer animate-in fade-in"
+          className="inline-flex items-center gap-1.5 px-3 h-9 rounded-md text-xs leading-4 font-semibold transition-all shadow-xs ml-0.5 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200 dark:border-rose-900 cursor-pointer animate-in fade-in"
         >
           <Loader2 className="w-4 h-4 animate-spin" />
           <span>Reviewing...</span>
-          <span className="text-[10px] bg-rose-200 dark:bg-rose-800 text-rose-800 dark:text-rose-200 px-1 py-0.2 rounded-sm font-bold hover:bg-rose-300">
+          <span className="text-[10px] bg-rose-200 dark:bg-rose-800 text-rose-800 dark:text-rose-200 px-1 py-0.2 rounded-md font-bold hover:bg-rose-300">
             Cancel ✕
           </span>
         </button>
@@ -266,7 +276,7 @@ export function GraphToolbar({
           disabled={validationState === "analyzing"}
           title="Run semantic graph validation"
           className={cn(
-            "inline-flex items-center gap-1.5 px-3 h-9 rounded-sm text-xs leading-4 font-semibold transition-all shadow-xs ml-0.5 cursor-pointer",
+            "inline-flex items-center gap-1.5 px-3 h-9 rounded-md text-xs leading-4 font-semibold transition-all shadow-xs ml-0.5 cursor-pointer",
             validationState === "analyzing"
               ? "bg-slate-100 text-slate-400 cursor-not-allowed"
               : validationState === "stale"
@@ -295,7 +305,7 @@ export function GraphToolbar({
               <ShieldCheck className="w-4 h-4" />
               <span>Validate Graph</span>
               {criticalCount > 0 && (
-                <span className="px-1 py-0.2 rounded-sm text-[10px] bg-rose-600 text-white font-bold">
+                <span className="px-1 py-0.2 rounded-md text-[10px] bg-rose-600 text-white font-bold">
                   {criticalCount}
                 </span>
               )}
@@ -319,7 +329,7 @@ export function GraphToolbar({
         type="button"
         onClick={onSaveGraph}
         title="Save Graph (Ctrl+S)"
-        className="w-9 h-9 flex items-center justify-center rounded-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+        className="w-9 h-9 flex items-center justify-center rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
       >
         <Save className="w-4 h-4" />
       </button>
@@ -345,7 +355,7 @@ function IconButton({
       disabled={disabled}
       title={title}
       className={cn(
-        "w-9 h-9 flex items-center justify-center rounded-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:cursor-not-allowed cursor-pointer shrink-0"
+        "w-9 h-9 flex items-center justify-center rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:cursor-not-allowed cursor-pointer shrink-0"
       )}
     >
       {icon}

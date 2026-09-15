@@ -27,6 +27,7 @@ import {
 } from "@/lib/types/validation";
 import { PresetTestGraph } from "@/lib/graph/testGraphs";
 import { Node, Edge } from "@xyflow/react";
+import { SlidingTabs, SlidingTabItem } from "@/components/ui/SlidingTabs";
 import { cn } from "@/lib/utils";
 
 export type InspectorTabType = "setup" | "tools" | "test" | "validation";
@@ -55,6 +56,9 @@ interface InspectorPanelProps {
   onCancelValidation?: () => void;
   onDismissError?: () => void;
   onFocusTarget: (targetId: string, targetType: "node" | "edge") => void;
+  onLocateInPrompt?: (nodeId: string, excerpt?: string) => void;
+  highlightExcerpt?: string | null;
+  onClearHighlight?: () => void;
   onLoadPresetGraph?: (preset: PresetTestGraph) => void;
   nodes: Node<CustomNodeData>[];
   edges?: Edge<CustomEdgeData>[];
@@ -83,6 +87,9 @@ export function InspectorPanel({
   onCancelValidation,
   onDismissError,
   onFocusTarget,
+  onLocateInPrompt,
+  highlightExcerpt,
+  onClearHighlight,
   onLoadPresetGraph,
   nodes,
   edges = [],
@@ -154,124 +161,69 @@ export function InspectorPanel({
       */}
       {selectedNode ? (
         <div className="p-3 pb-0">
-          <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 dark:bg-slate-900 rounded-lg text-xs font-semibold text-slate-500">
-            <button
-              onClick={() => onTabChange("setup")}
-              className={cn(
-                "py-1.5 px-2 rounded-md text-center transition-all truncate text-[11px]",
-                activeTab === "setup"
-                  ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-2xs font-bold"
-                  : "hover:text-slate-900 dark:hover:text-slate-200"
-              )}
-            >
-              Setup
-            </button>
+          {(() => {
+            const nodeName = selectedNode.data?.name?.toLowerCase();
+            const nodeFindings =
+              validationResult?.findings.filter(
+                (f) =>
+                  !f.primaryEdgeId &&
+                  (f.primaryNodeId === selectedNode.id ||
+                    (nodeName && f.primaryNodeId?.toLowerCase() === nodeName))
+              ) || [];
+            const hasCritical = nodeFindings.some((f) => f.severity === "critical");
 
-            <button
-              onClick={() => onTabChange("validation")}
-              className={cn(
-                "py-1.5 px-2 rounded-md text-center transition-all truncate text-[11px] inline-flex items-center justify-center gap-1.5",
-                activeTab === "validation"
-                  ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-2xs font-bold"
-                  : "hover:text-slate-900 dark:hover:text-slate-200"
-              )}
-            >
-              <span>Validate</span>
-              {(() => {
-                const nodeName = selectedNode.data?.name?.toLowerCase();
-                const nodeFindings =
-                  validationResult?.findings.filter(
-                    (f) =>
-                      !f.primaryEdgeId &&
-                      (f.primaryNodeId === selectedNode.id ||
-                        (nodeName && f.primaryNodeId?.toLowerCase() === nodeName))
-                  ) || [];
+            const nodeTabs: SlidingTabItem<"setup" | "validation">[] = [
+              { id: "setup", label: "Setup" },
+              {
+                id: "validation",
+                label: "Validate",
+                badge:
+                  nodeFindings.length > 0 ? (
+                    <span
+                      className={cn(
+                        "px-1.5 py-0.2 rounded-full text-[9px] font-bold text-white",
+                        hasCritical ? "bg-rose-500" : "bg-amber-500"
+                      )}
+                    >
+                      {nodeFindings.length}
+                    </span>
+                  ) : undefined,
+              },
+            ];
 
-                if (nodeFindings.length === 0) return null;
-                const hasCritical = nodeFindings.some((f) => f.severity === "critical");
-
-                return (
-                  <span
-                    className={cn(
-                      "px-1.5 py-0.2 rounded-full text-[9px] font-bold text-white",
-                      hasCritical ? "bg-rose-500" : "bg-amber-500"
-                    )}
-                  >
-                    {nodeFindings.length}
-                  </span>
-                );
-              })()}
-            </button>
-          </div>
+            return (
+              <SlidingTabs
+                tabs={nodeTabs}
+                activeTab={activeTab === "validation" ? "validation" : "setup"}
+                onChange={(tab) => onTabChange(tab)}
+              />
+            );
+          })()}
         </div>
       ) : !selectedEdge && (
         <div className="p-3 pb-0">
-          <div className="grid grid-cols-4 gap-1 p-1 bg-slate-100 dark:bg-slate-900 rounded-lg text-xs font-semibold text-slate-500">
-            <button
-              onClick={() => {
-                onTabChange("setup");
-                onClearSelection();
-              }}
-              className={cn(
-                "py-1.5 px-1 rounded-md text-center transition-all truncate text-[11px]",
-                activeTab === "setup"
-                  ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-2xs font-bold"
-                  : "hover:text-slate-900 dark:hover:text-slate-200"
-              )}
-            >
-              Agent setup
-            </button>
-
-            <button
-              onClick={() => {
-                onTabChange("tools");
-                onClearSelection();
-              }}
-              className={cn(
-                "py-1.5 px-1 rounded-md text-center transition-all truncate text-[11px]",
-                activeTab === "tools"
-                  ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-2xs font-bold"
-                  : "hover:text-slate-900 dark:hover:text-slate-200"
-              )}
-            >
-              Tools
-            </button>
-
-            <button
-              onClick={() => {
-                onTabChange("test");
-                onClearSelection();
-              }}
-              className={cn(
-                "py-1.5 px-1 rounded-md text-center transition-all truncate text-[11px]",
-                activeTab === "test"
-                  ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-2xs font-bold"
-                  : "hover:text-slate-900 dark:hover:text-slate-200"
-              )}
-            >
-              Test agent
-            </button>
-
-            <button
-              onClick={() => {
-                onTabChange("validation");
-                onClearSelection();
-              }}
-              className={cn(
-                "py-1.5 px-1 rounded-md text-center transition-all truncate text-[11px] relative",
-                activeTab === "validation"
-                  ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-2xs font-bold"
-                  : "hover:text-slate-900 dark:hover:text-slate-200"
-              )}
-            >
-              <span>Validation</span>
-              {validationResult && validationResult.findings.length > 0 && (
-                <span className="ml-1 px-1 py-0.2 rounded-full text-[9px] bg-rose-500 text-white font-bold">
-                  {validationResult.findings.length}
-                </span>
-              )}
-            </button>
-          </div>
+          <SlidingTabs
+            tabs={[
+              { id: "setup", label: "Agent setup" },
+              { id: "tools", label: "Tools" },
+              { id: "test", label: "Test agent" },
+              {
+                id: "validation",
+                label: "Validation",
+                badge:
+                  validationResult && validationResult.findings.length > 0 ? (
+                    <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[9px] bg-rose-500 text-white font-bold leading-tight">
+                      {validationResult.findings.length}
+                    </span>
+                  ) : undefined,
+              },
+            ]}
+            activeTab={activeTab}
+            onChange={(tab) => {
+              onTabChange(tab);
+              onClearSelection();
+            }}
+          />
         </div>
       )}
 
@@ -289,6 +241,8 @@ export function InspectorPanel({
             nodes={nodes}
             edges={edges}
             onFocusTarget={onFocusTarget}
+            highlightExcerpt={highlightExcerpt}
+            onClearHighlight={onClearHighlight}
           />
         ) : selectedNode && activeTab === "validation" ? (
           <ValidationTab
@@ -301,6 +255,7 @@ export function InspectorPanel({
             onCancelValidation={onCancelValidation}
             onDismissError={onDismissError}
             onFocusTarget={onFocusTarget}
+            onLocateInPrompt={onLocateInPrompt}
             onLoadPresetGraph={onLoadPresetGraph}
             selectedNode={selectedNode}
             selectedEdge={selectedEdge}

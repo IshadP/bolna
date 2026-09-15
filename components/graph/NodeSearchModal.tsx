@@ -82,9 +82,9 @@ export function NodeSearchModal({
                   onSelectNode(node.id);
                   onClose();
                 }}
-                className="w-full flex items-center gap-2.5 p-2 rounded-xl text-left hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors group"
+                className="w-full flex items-center gap-2.5 p-2 rounded-md text-left hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors group"
               >
-                <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+                <div className="w-7 h-7 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
                   {getNodeIcon(node.data.type)}
                 </div>
                 <div className="flex-1 min-w-0">

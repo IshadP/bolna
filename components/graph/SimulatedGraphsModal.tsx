@@ -80,7 +80,7 @@ export function SimulatedGraphsModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-2 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             title="Close menu (Esc)"
           >
             <X className="w-5 h-5" />
@@ -105,7 +105,7 @@ export function SimulatedGraphsModal({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search scenarios by title, flaw, or intent..."
-              className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+              className="w-full h-9 pl-9 pr-3 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
             />
           </div>
 
@@ -117,7 +117,7 @@ export function SimulatedGraphsModal({
                 type="button"
                 onClick={() => setSelectedComplexity(comp)}
                 className={cn(
-                  "px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all capitalize cursor-pointer",
+                  "px-2.5 py-1 rounded-md text-[11px] font-medium transition-all capitalize cursor-pointer",
                   selectedComplexity === comp
                     ? "bg-purple-600 text-white shadow-xs font-semibold"
                     : "bg-slate-100 text-slate-600 dark:bg-slate-900 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-800"
@@ -139,7 +139,7 @@ export function SimulatedGraphsModal({
             return (
               <div
                 key={preset.id}
-                className="group relative flex flex-col justify-between p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-purple-500 dark:hover:border-purple-500 hover:shadow-lg hover:shadow-purple-500/5 transition-all duration-150"
+                className="group relative flex flex-col justify-between p-4 rounded-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-purple-500 dark:hover:border-purple-500 hover:shadow-lg hover:shadow-purple-500/5 transition-all duration-150"
               >
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-2">
@@ -148,7 +148,7 @@ export function SimulatedGraphsModal({
                     </div>
                     <span
                       className={cn(
-                        "text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0",
+                        "text-[10px] font-semibold px-2 py-0.5 rounded-md shrink-0",
                         preset.complexity === "Basic" && "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
                         preset.complexity === "Intermediate" && "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300",
                         preset.complexity === "Advanced" && "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
@@ -209,7 +209,7 @@ export function SimulatedGraphsModal({
                       onSelectPreset(preset);
                       onClose();
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs transition-colors shadow-xs group-hover:shadow-md group-hover:shadow-purple-500/20 cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs transition-colors shadow-xs group-hover:shadow-md group-hover:shadow-purple-500/20 cursor-pointer"
                   >
                     <span>Load Graph</span>
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />

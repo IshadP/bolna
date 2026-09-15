@@ -78,6 +78,10 @@ export async function POST(req: NextRequest) {
       const presetFingerprint = `${pNodeParts.join("|")}###${pEdgeParts.join("|")}`;
 
       if (presetFingerprint === incomingFingerprint) {
+        // Spend 2.5 to 3.0 seconds on the reviewing screen to simulate deep AI inspection
+        const simulatedDelayMs = 2600 + Math.floor(Math.random() * 600); // 2.6s - 3.2s
+        await new Promise((resolve) => setTimeout(resolve, simulatedDelayMs));
+
         const criticalCount = preset.expectedFindings.filter((f) => f.severity === "critical").length;
         const structuralCount = preset.expectedFindings.filter((f) => f.severity === "structural").length;
         const warningCount = preset.expectedFindings.filter((f) => f.severity === "warning").length;
